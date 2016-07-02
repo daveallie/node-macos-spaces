@@ -13,16 +13,16 @@ var spaces = function(callback) {
 
     var monitors = map.SpacesDisplayConfiguration['Management Data'].Monitors;
     if (monitors) {
-      for (var i = 0; i < monitors.length; i++) {
-        if (monitors[i].Spaces) {
-          for (var j = 0; j < monitors[i].Spaces.length; j++) {
+      monitors.forEach(function(m) {
+        if (m.Spaces) {
+          m.Spaces.forEach(function(s) {
             spaceArr.push({
-              displayUUID: monitors[i]['Display Identifier'],
-              spaceUUID: monitors[i].Spaces[j].uuid
+              displayUUID: m['Display Identifier'],
+              spaceUUID: s.uuid
             });
-          }
+          });
         }
-      }
+      });
     }
 
     callback(spaceArr);
@@ -34,25 +34,20 @@ var spacesByDisplay = function(callback) {
   spaces(function(collectedSpaces) {
     var spaceMap = {};
     var displayUUIDs = [];
-    var displayUUID;
-    for (var i = 0; i < collectedSpaces.length; i++) {
-      displayUUID = collectedSpaces[i].displayUUID;
-      spaceMap[displayUUID] = spaceMap[displayUUID] || [];
-      spaceMap[displayUUID].push(collectedSpaces[i].spaceUUID);
-      if (displayUUIDs.indexOf(displayUUID) === -1) {
-        displayUUIDs.push(displayUUID);
+    collectedSpaces.forEach(function(s) {
+      spaceMap[s.displayUUID] = spaceMap[s.displayUUID] || [];
+      spaceMap[s.displayUUID].push(s.spaceUUID);
+      if (displayUUIDs.indexOf(s.displayUUID) === -1) {
+        displayUUIDs.push(s.displayUUID);
       }
-    }
+    });
 
-    var groupedArr = [];
-    for (i = 0; i < displayUUIDs.length; i++) {
-      groupedArr.push({
-        displayUUID: displayUUIDs[i],
-        spaceUUIDs: spaceMap[displayUUIDs[i]]
-      });
-    }
-
-    callback(groupedArr);
+    callback(displayUUIDs.map(function(duuid) {
+      return {
+        displayUUID: duuid,
+        spaceUUIDs: spaceMap[duuid]
+      };
+    }));
   });
 };
 
