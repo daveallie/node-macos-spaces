@@ -59,5 +59,6 @@ var spaces = function(callback) {
 
 module.exports = {
   rawConfig: rawConfig,
-  spaces: spaces
+  spaces: spaces,
+  allSpaces: allSpaces
 };
