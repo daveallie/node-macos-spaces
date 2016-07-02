@@ -1,6 +1,6 @@
 {
   "name": "macos-spaces",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Gets information about workspaces in macOS",
   "author": "Dave Allie <dave@daveallie.com>",
   "main": "index.js",
