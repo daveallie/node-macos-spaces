@@ -8,14 +8,14 @@ Gets information about workspaces in macOS
 var macOSSpaces = require("macos-spaces");
 
 
-// spaces (defaults to only showing active spaces / monitors)
 // [
 //   {
-//     "monitorId": "Main",
-//     "spaces": [
-//       "",
-//       "D3D53AA0-93B8-4F33-8FF1-5A6A603C5EE6"
-//     ]
+//     "displayUUID": "Main",
+//     "spaceUUID": ""
+//   },
+//   {
+//     "displayUUID": "Main",
+//     "spaceUUID": "60776AC5-A552-4A66-87FD-B4DF2C195DA2"
 //   }
 // ]
 macOSSpaces.spaces(function(spaces) {
@@ -23,18 +23,13 @@ macOSSpaces.spaces(function(spaces) {
 });
 
 
-// allSpaces (includes non active spaces / monitors)
 // [
 //   {
-//     "monitorId": "Main",
-//     "spaces": [
+//     "displayUUID": "Main",
+//     "spaceUUIDs": [
 //       "",
-//       "D3D53AA0-93B8-4F33-8FF1-5A6A603C5EE6"
+//       "60776AC5-A552-4A66-87FD-B4DF2C195DA2"
 //     ]
-//   },
-//   {
-//     "monitorId": "513958C1-FE8C-A864-07A6-7D3E07A10528",
-//     "spaces": []
 //   }
 // ]
 macOSSpaces.allSpaces(function(spaces) {

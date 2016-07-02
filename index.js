@@ -1,8 +1,5 @@
-var fs = require("fs");
 var exec = require("child_process").exec;
-var helpers = require("./helpers");
 var ndictionaryParser = require("./ndictionary-parser");
-var spacesPlist = process.env.HOME + '/Library/Preferences/com.apple.spaces.plist';
 
 var rawConfig = function(callback) {
   exec('defaults read com.apple.spaces', function(err, stdout, stderr) {
@@ -10,55 +7,57 @@ var rawConfig = function(callback) {
   });
 };
 
-var spaceData = function(filterActive, callback) {
+var spaces = function(callback) {
   rawConfig(function(map) {
+    var spaceArr = [];
+
     var monitors = map.SpacesDisplayConfiguration['Management Data'].Monitors;
-    var activeSpaces = map.SpacesDisplayConfiguration['Space Properties'].map(function(s) {
-      return s.name;
-    });
-
-    var containsActive;
-    var spaces;
-    var spaceMap;
-
     if (monitors) {
-      spaceMap = monitors.map(function(m) {
-        containsActive = false;
-
-        if (m.Spaces) {
-          spaces = m.Spaces.map(function(s) {
-            containsActive = containsActive || (activeSpaces.indexOf(s.uuid) > -1);
-            return s.uuid;
-          });
-        } else {
-          spaces = [];
+      for (var i = 0; i < monitors.length; i++) {
+        if (monitors[i].Spaces) {
+          for (var j = 0; j < monitors[i].Spaces.length; j++) {
+            spaceArr.push({
+              displayUUID: monitors[i]['Display Identifier'],
+              spaceUUID: monitors[i].Spaces[j].uuid
+            });
+          }
         }
-
-        if (!filterActive || containsActive) {
-          return {
-            monitorId: m['Display Identifier'],
-            spaces: spaces
-          };
-        }
-      });
-    } else {
-      spaceMap = [];
+      }
     }
 
-    callback(helpers.cleanArray(spaceMap, undefined));
+    callback(spaceArr);
   });
 };
 
-var allSpaces = function(callback) {
-  spaceData(false, callback);
-};
 
-var spaces = function(callback) {
-  spaceData(true, callback);
+var spacesByDisplay = function(callback) {
+  spaces(function(collectedSpaces) {
+    var spaceMap = {};
+    var displayUUIDs = [];
+    var displayUUID;
+    for (var i = 0; i < collectedSpaces.length; i++) {
+      displayUUID = collectedSpaces[i].displayUUID;
+      spaceMap[displayUUID] = spaceMap[displayUUID] || [];
+      spaceMap[displayUUID].push(collectedSpaces[i].spaceUUID);
+      if (displayUUIDs.indexOf(displayUUID) === -1) {
+        displayUUIDs.push(displayUUID);
+      }
+    }
+
+    var groupedArr = [];
+    for (i = 0; i < displayUUIDs.length; i++) {
+      groupedArr.push({
+        displayUUID: displayUUIDs[i],
+        spaceUUIDs: spaceMap[displayUUIDs[i]]
+      });
+    }
+
+    callback(groupedArr);
+  });
 };
 
 module.exports = {
   rawConfig: rawConfig,
   spaces: spaces,
-  allSpaces: allSpaces
+  spacesByDisplay: spacesByDisplay
 };
