@@ -1,24 +1,33 @@
 var exec = require("child_process").exec;
-var ndictionaryParser = require("./ndictionary-parser");
+var xpath = require('xpath');
+var dom = require('xmldom').DOMParser;
 
 var rawConfig = function(callback) {
-  exec('defaults read com.apple.spaces', function(err, stdout, stderr) {
-    callback(JSON.parse(ndictionaryParser.parse(stdout)));
+  exec('defaults export com.apple.spaces -', function(err, stdout, stderr) {
+    if (err) { callback(err) };
+    var doc = new dom().parseFromString(stdout);
+    callback(doc);
   });
 };
 
 var spaces = function(callback) {
-  rawConfig(function(map) {
+  rawConfig(function(doc) {
     var spaceArr = [];
 
-    var monitors = map.SpacesDisplayConfiguration['Management Data'].Monitors;
+    var monitors_query = "//dict[preceding-sibling::key='SpacesDisplayConfiguration']//dict[key='Current Space']";
+    var monitors = xpath.select(monitors_query, doc);
+
     if (monitors) {
-      monitors.forEach(function(m) {
-        if (m.Spaces) {
-          m.Spaces.forEach(function(s) {
+      monitors.forEach(function (monitor, key) {
+        var index = "[" + (key + 1) + "]";
+        var display = xpath.select(monitors_query + index + "/string[preceding-sibling::key='Display Identifier']", monitor);
+        var displayUUID = display[0].firstChild.data;
+        var spaces = xpath.select(monitors_query + "/array/dict" + index + "/string[preceding-sibling::key='uuid']", monitor);
+        if (spaces) {
+          spaces.forEach(function (space) {
             spaceArr.push({
-              displayUUID: m['Display Identifier'],
-              spaceUUID: s.uuid
+              displayUUID: displayUUID,
+              spaceUUID: space.firstChild.data
             });
           });
         }
@@ -28,7 +37,6 @@ var spaces = function(callback) {
     callback(spaceArr);
   });
 };
-
 
 var spacesByDisplay = function(callback) {
   spaces(function(collectedSpaces) {
@@ -54,5 +62,6 @@ var spacesByDisplay = function(callback) {
 module.exports = {
   rawConfig: rawConfig,
   spaces: spaces,
+  allSpaces: spacesByDisplay,
   spacesByDisplay: spacesByDisplay
 };
