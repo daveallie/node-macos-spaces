@@ -1,34 +1,43 @@
 var exec = require("child_process").exec;
-var ndictionaryParser = require("./ndictionary-parser");
+var plist = require('plist');
 
 var rawConfig = function(callback) {
-  exec('defaults read com.apple.spaces', function(err, stdout, stderr) {
-    callback(JSON.parse(ndictionaryParser.parse(stdout)));
+  exec('defaults export com.apple.spaces -', function(err, stdout, stderr) {
+    if (err) { callback(err) };
+    callback(plist.parse(stdout));
   });
 };
 
-var spaces = function(callback) {
-  rawConfig(function(map) {
-    var spaceArr = [];
+var extract = function(raw) {
+  var spaceArr = [];
 
-    var monitors = map.SpacesDisplayConfiguration['Management Data'].Monitors;
-    if (monitors) {
-      monitors.forEach(function(m) {
-        if (m.Spaces) {
-          m.Spaces.forEach(function(s) {
-            spaceArr.push({
-              displayUUID: m['Display Identifier'],
-              spaceUUID: s.uuid
-            });
+  var monitors = raw.SpacesDisplayConfiguration['Management Data'].Monitors;
+  if (monitors) {
+    monitors.forEach(function (monitor, key) {
+      var spaces = monitor.Spaces;
+      if (spaces) {
+        spaces.forEach(function (space) {
+          spaceArr.push({
+            displayUUID: monitor['Display Identifier'],
+            spaceUUID: space.uuid,
           });
-        }
-      });
-    }
+        });
+      }
+    });
+  }
 
-    callback(spaceArr);
-  });
+  return spaceArr;
 };
 
+var spaces = function(raw, callback) {
+  if (typeof raw == 'function') {
+    callback = raw;
+    return rawConfig(function(raw) {
+      callback(extract(raw));
+    });
+  }
+  callback(extract(raw));
+};
 
 var spacesByDisplay = function(callback) {
   spaces(function(collectedSpaces) {
@@ -54,5 +63,6 @@ var spacesByDisplay = function(callback) {
 module.exports = {
   rawConfig: rawConfig,
   spaces: spaces,
+  allSpaces: spacesByDisplay,
   spacesByDisplay: spacesByDisplay
 };

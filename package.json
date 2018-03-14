@@ -5,7 +5,7 @@
   "author": "Dave Allie <dave@daveallie.com>",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -14,5 +14,11 @@
   "bugs": {
     "url": "https://github.com/daveallie/node-macos-spaces/issues"
   },
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "plist": "^2.1.0"
+  },
+  "devDependencies": {
+    "mocha": "^5.0.4"
+  }
 }
