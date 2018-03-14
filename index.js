@@ -1,41 +1,42 @@
 var exec = require("child_process").exec;
-var xpath = require('xpath');
-var dom = require('xmldom').DOMParser;
+var plist = require('plist');
 
 var rawConfig = function(callback) {
   exec('defaults export com.apple.spaces -', function(err, stdout, stderr) {
     if (err) { callback(err) };
-    var doc = new dom().parseFromString(stdout);
-    callback(doc);
+    callback(plist.parse(stdout));
   });
 };
 
-var spaces = function(callback) {
-  rawConfig(function(doc) {
-    var spaceArr = [];
+var extract = function(raw) {
+  var spaceArr = [];
 
-    var monitors_query = "//dict[preceding-sibling::key='SpacesDisplayConfiguration']//dict[key='Current Space']";
-    var monitors = xpath.select(monitors_query, doc);
-
-    if (monitors) {
-      monitors.forEach(function (monitor, key) {
-        var index = "[" + (key + 1) + "]";
-        var display = xpath.select(monitors_query + index + "/string[preceding-sibling::key='Display Identifier']", monitor);
-        var displayUUID = display[0].firstChild.data;
-        var spaces = xpath.select(monitors_query + "/array/dict" + index + "/string[preceding-sibling::key='uuid']", monitor);
-        if (spaces) {
-          spaces.forEach(function (space) {
-            spaceArr.push({
-              displayUUID: displayUUID,
-              spaceUUID: space.firstChild.data
-            });
+  var monitors = raw.SpacesDisplayConfiguration['Management Data'].Monitors;
+  if (monitors) {
+    monitors.forEach(function (monitor, key) {
+      var spaces = monitor.Spaces;
+      if (spaces) {
+        spaces.forEach(function (space) {
+          spaceArr.push({
+            displayUUID: monitor['Display Identifier'],
+            spaceUUID: space.uuid,
           });
-        }
-      });
-    }
+        });
+      }
+    });
+  }
 
-    callback(spaceArr);
-  });
+  return spaceArr;
+};
+
+var spaces = function(raw, callback) {
+  if (typeof raw == 'function') {
+    callback = raw;
+    return rawConfig(function(raw) {
+      callback(extract(raw));
+    });
+  }
+  callback(extract(raw));
 };
 
 var spacesByDisplay = function(callback) {

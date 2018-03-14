@@ -5,7 +5,7 @@
   "author": "Dave Allie <dave@daveallie.com>",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -16,7 +16,9 @@
   },
   "license": "ISC",
   "dependencies": {
-    "xmldom": "^0.1.27",
-    "xpath": "0.0.27"
+    "plist": "^2.1.0"
+  },
+  "devDependencies": {
+    "mocha": "^5.0.4"
   }
 }
